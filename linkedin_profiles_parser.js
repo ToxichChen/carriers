@@ -10,7 +10,7 @@ let con = mysql.createConnection({
 });
 
 const searchScrapperId = '2575307990645423';
-const rocketSearchApiKey = '7e5cedk906f102fd2fad229c26ed3275d684283';
+const rocketSearchApiKey = '8cd41kb002500ac227ce845e7e889ac9d40265';
 const phantomBusterApiKey = '1JoB23frVJEWFrHFij1W8OIC4JeDGKSgNH3Z0vxei9Q';
 // Credentials for phantombuster
 const initOptions = {
