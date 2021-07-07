@@ -42,6 +42,8 @@ async function searchForEmail(linkedinUrl) {
         } else {
             return '';
         }
+    } else {
+        return '';
     }
 }
 // Check phantombuster search process
@@ -216,28 +218,23 @@ async function runParser() {
         console.log(accounts[accountsIndex].session_token)
         parsedCarrierId = carrier.id;
         company = carrier.Brand_Name;
-        await fetchData (await runSearchParser(carrier.Brand_Name + ' security', accounts[accountsIndex].session_token));
+        if (company.includes(' - ')) {
+            company = company.replace(' - ', ' ');
+        }
+        console.log(company)
+        await fetchData (await runSearchParser(company + ' security', accounts[accountsIndex].session_token));
         if (accountsIndex === 2) {
             accountsIndex -= 2;
         } else {
             accountsIndex++;
         }
     }
+    con.end();
 }
 
 
 // ---------Start---------
 // Reading values from console
-let searchArguments = [];
 let company = '';
 let parsedCarrierId = '';
-// process.argv.forEach(function (val, index, array) {
-//     if (index > 1) {
-//         searchArguments.push(val);
-//     }
-// });
-// company = searchArguments[0];
-// searchArguments.forEach(element => query = query + ' ' + element)
-// console.log(query)
-//Running search process on phantombuster
 runParser()
