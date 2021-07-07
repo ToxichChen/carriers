@@ -65,12 +65,12 @@ async function checkStatus(agentId) {
 
 async function saveResults(array) {
     for (const element of array) {
-        let job = element.job.toLowerCase();
+        let job = (typeof(element.job) !== "undefined") ? element.job.toLowerCase() : '';
         console.log(job)
         if ((job.includes("head") || job.includes("chief") || job.includes("director")) && job.includes("security")/* && job.includes(company)*/) {
             let email = await searchForEmail(element.url);
             // Saving to database
-            let sql = (`INSERT INTO profiles (country, carries, Chief_Security_Officer, CSO_Title, CSO_email, carrier_id) VALUES ( '${element.location}', '${company}', '${element.name}', '${element.job}', '${email}', ${parsedCarrierId}) `);
+            let sql = (`INSERT INTO profiles (country, carries, profile_url, Chief_Security_Officer, CSO_Title, CSO_email, carrier_id) VALUES ( '${element.location}', '${company}', '${element.profileUrl}', '${element.name}', '${element.job}', '${email}', ${parsedCarrierId}) `);
             console.log(sql);
             con.query(sql, function (err, result, fields) {
                 if (err) throw err;
@@ -144,6 +144,7 @@ async function fetchData (containerId) {
         console.log(result)
     } else {
         await saveResults(result)
+        await updateCarriers(parsedCarrierId);
     }
 }
 
@@ -216,7 +217,6 @@ async function runParser() {
         parsedCarrierId = carrier.id;
         company = carrier.Brand_Name;
         await fetchData (await runSearchParser(carrier.Brand_Name + ' security', accounts[accountsIndex].session_token));
-        await updateCarriers(carrier.id);
         if (accountsIndex === 2) {
             accountsIndex -= 2;
         } else {
