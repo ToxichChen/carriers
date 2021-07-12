@@ -3,11 +3,32 @@ const mysql = require('mysql');
 const fetch = require('node-fetch');
 
 let con = mysql.createConnection({
-    host: "localhost",
-    user: "dmitry",
-    password: "aqswdefr1",
+    host: "mysql",
+    user: "root",
+    password: "root",
     database: "carriers"
 });
+
+let country_list = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla", "Antigua", "Barbuda", "Argentina", "Armenia",
+    "Aruba", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin",
+    "Bermuda", "Bhutan", "Bolivia", "Bosnia & Herzegovina", "Botswana", "Brazil", "British Virgin Islands", "Brunei", "Bulgaria",
+    "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Cape Verde", "Cayman Islands", "Chad", "Chile", "China", "Colombia", "Congo",
+    "Cook Islands", "Costa Rica", "Cote D Ivoire", "Croatia", "Cruise Ship", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti",
+    "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Estonia", "Ethiopia", "Falkland Islands",
+    "Faroe Islands", "Fiji", "Finland", "France", "French Polynesia", "French West Indies", "Gabon", "Gambia", "Georgia", "Germany", "Ghana",
+    "Gibraltar", "Greece", "Greenland", "Grenada", "Guam", "Guatemala", "Guernsey", "Guinea", "Guinea Bissau", "Guyana", "Haiti", "Honduras",
+    "Hong Kong", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Isle of Man", "Israel", "Italy", "Jamaica", "Japan",
+    "Jersey", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Kyrgyz Republic", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya",
+    "Liechtenstein", "Lithuania", "Luxembourg", "Macau", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta",
+    "Mauritania", "Mauritius", "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat", "Morocco", "Mozambique", "Namibia",
+    "Nepal", "Netherlands", "Netherlands Antilles", "New Caledonia", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman",
+    "Pakistan", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar",
+    "Reunion", "Romania", "Russia", "Rwanda", "Saint Pierre", "Miquelon", "Samoa", "San Marino", "Satellite", "Saudi Arabia", "Senegal",
+    "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka",
+    "Saint Kitts and Nevis", "St Kitts and Nevis", "St Lucia", "St Vincent", "St. Lucia", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland", "Syria",
+    "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor L'Este", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey",
+    "Turkmenistan", "Turks and Caicos", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "Uruguay", "Uzbekistan",
+    "Venezuela", "Vietnam", "Virgin Islands", "Yemen", "Zambia", "Zimbabwe", "BH"];
 
 const searchScrapperId = '2575307990645423';
 const rocketSearchApiKey = '8cd41kb002500ac227ce845e7e889ac9d40265';
@@ -19,6 +40,7 @@ const initOptions = {
         "Content-Type": "application/json",
     },
 }
+
 // Calling to rocketreach.co for email by LinkedIn url
 async function searchForEmail(linkedinUrl) {
     let url = 'https://api.rocketreach.co/v2/api/lookupProfile?li_url=' + linkedinUrl;
@@ -37,7 +59,7 @@ async function searchForEmail(linkedinUrl) {
         result = await response.json();
         console.log(result.emails);
         emails = result.emails
-        if (emails.length !== 0 && typeof(emails[0].email) != "undefined") {
+        if (emails.length !== 0 && typeof (emails[0].email) != "undefined") {
             return emails[0].email;
         } else {
             return '';
@@ -46,6 +68,7 @@ async function searchForEmail(linkedinUrl) {
         return '';
     }
 }
+
 // Check phantombuster search process
 async function checkStatus(agentId) {
     let url = 'https://api.phantombuster.com/api/v2/agents/fetch-output?id=' + agentId;
@@ -66,25 +89,44 @@ async function checkStatus(agentId) {
 }
 
 async function saveResults(array) {
+    let count = 0;
     for (const element of array) {
-        let job = (typeof(element.job) !== "undefined") ? element.job.toLowerCase() : '';
+        let job = (typeof (element.job) !== "undefined") ? element.job.toLowerCase() : '';
         console.log(job)
-        if ((job.includes("head") || job.includes("chief") || job.includes("director")) && job.includes("security")/* && job.includes(company)*/) {
-            let email = await searchForEmail(element.url);
-            // Saving to database
-            let sql = (`INSERT INTO profiles (country, carries, profile_url, Chief_Security_Officer, CSO_Title, CSO_email, carrier_id) VALUES ( '${element.location}', '${company}', '${element.profileUrl}', '${element.name}', '${element.job}', '${email}', ${parsedCarrierId}) `);
-            console.log(sql);
-            con.query(sql, function (err, result, fields) {
-                if (err) throw err;
-                console.log("1 record inserted");
-                //return true;
-            });
+        if (/*(job.includes("head") || job.includes("chief") || job.includes("director")) && */ job.includes("security")/* && job.includes(company)*/) {
+            let companyName = company;
+            for (let country of country_list) {
+                if (company.includes(country)) {
+                    companyName = company.replace(country, '')
+                    companyName = companyName.trim();
+                }
+            }
+            console.log(companyName)
+            if (job.includes(companyName.toLowerCase())) {
+                if (element.name === 'undefined') {
+                    return 2;
+                }
+                count++;
+                let email = await searchForEmail(element.url);
+                // Saving to database
+                let sql = (`INSERT INTO profiles (country, carries, profile_url, Chief_Security_Officer, CSO_Title, CSO_email, carrier_id) VALUES ( '${element.location}', '${company}', '${element.profileUrl}', '${element.name}', '${element.job}', '${email}', ${parsedCarrierId}) `);
+                console.log(sql);
+                con.query(sql, function (err, result, fields) {
+                    if (err) throw err;
+                    console.log("1 record inserted");
+                    //return true;
+                });
+            }
         }
     }
+    if (count === 0) {
+        return 3;
+    }
+    return 1;
 }
 
-async function updateCarriers(carrierId) {
-    let sql = (`UPDATE carriers SET is_parsed = 1 WHERE id = ${carrierId}`);
+async function updateCarriers(carrierId, state) {
+    let sql = (`UPDATE carriers SET is_parsed = ${state} WHERE id = ${carrierId}`);
     return await new Promise((resolve, reject) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -138,15 +180,14 @@ async function getResults(containerId) {
     }
 }
 
-async function fetchData (containerId) {
+async function fetchData(containerId) {
     let result = await getResults(containerId);
     if (result === false) {
         console.log('Error occured')
     } else if (result.error) {
         console.log(result)
     } else {
-        await saveResults(result)
-        await updateCarriers(parsedCarrierId);
+        await updateCarriers(parsedCarrierId, await saveResults(result));
     }
 }
 
@@ -178,7 +219,9 @@ async function runSearchParser(query, sessionCookie) {
 }
 
 async function getAccounts() {
-    let sql = (`SELECT * FROM accounts WHERE active = 1`);
+    let sql = (`SELECT *
+                FROM accounts
+                WHERE active = 1`);
     return await new Promise((resolve, reject) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -194,7 +237,10 @@ async function getAccounts() {
 }
 
 async function getCarriers() {
-    let sql = (`SELECT * FROM carriers WHERE is_parsed = 0 limit 9`);
+    let sql = (`SELECT *
+                FROM carriers
+                WHERE is_parsed = 0
+                limit 9`);
     return await new Promise((resolve, reject) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -222,7 +268,7 @@ async function runParser() {
             company = company.replace(' - ', ' ');
         }
         console.log(company)
-        await fetchData (await runSearchParser(company + ' security', accounts[accountsIndex].session_token));
+        await fetchData(await runSearchParser(company + ' security', accounts[accountsIndex].session_token));
         if (accountsIndex === 2) {
             accountsIndex -= 2;
         } else {
