@@ -1,12 +1,13 @@
 var Airtable = require('airtable');
 var base = new Airtable({apiKey: 'keytvFhqneWKMyPnX'}).base('app60wmuP5QM2G430');
 const mysql = require('mysql');
+const credentials = require('./credentials.js');
 
 let con = mysql.createConnection({
-    host: "mysql",
-    user: "root",
-    password: "root",
-    database: "carriers"
+    host: credentials.dbHost,
+    user: credentials.dbUser,
+    password: credentials.dbPassword,
+    database: credentials.database
 });
 
 base('Carriers').select({

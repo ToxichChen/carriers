@@ -1,12 +1,13 @@
 const axios = require("axios")
 const mysql = require('mysql');
 const fetch = require('node-fetch');
+const credentials = require('./credentials.js')
 
 let con = mysql.createConnection({
-    host: "localhost",
-    user: "dmitry",
-    password: "aqswdefr1",
-    database: "carriers"
+    host: credentials.dbHost,
+    user: credentials.dbUser,
+    password: credentials.dbPassword,
+    database: credentials.database
 });
 
 let country_list = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla", "Antigua", "Barbuda", "Argentina", "Armenia",
@@ -30,9 +31,9 @@ let country_list = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "A
     "Turkmenistan", "Turks and Caicos", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "Uruguay", "Uzbekistan",
     "Venezuela", "Vietnam", "Virgin Islands", "Yemen", "Zambia", "Zimbabwe", "BH"];
 
-const searchScrapperId = '2575307990645423';
-const rocketSearchApiKey = '8cd41kb002500ac227ce845e7e889ac9d40265';
-const phantomBusterApiKey = '1JoB23frVJEWFrHFij1W8OIC4JeDGKSgNH3Z0vxei9Q';
+const searchScrapperId = credentials.searchScrapperId;
+const rocketSearchApiKey = credentials.rocketSearchApiKey;
+const phantomBusterApiKey = credentials.phantomBusterApiKey;
 // Credentials for phantombuster
 const initOptions = {
     headers: {
