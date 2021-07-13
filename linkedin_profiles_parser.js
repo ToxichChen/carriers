@@ -3,9 +3,9 @@ const mysql = require('mysql');
 const fetch = require('node-fetch');
 
 let con = mysql.createConnection({
-    host: "mysql",
-    user: "root",
-    password: "root",
+    host: "localhost",
+    user: "dmitry",
+    password: "aqswdefr1",
     database: "carriers"
 });
 
