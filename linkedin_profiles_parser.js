@@ -26,10 +26,11 @@ let country_list = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "A
     "Pakistan", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar",
     "Reunion", "Romania", "Russia", "Rwanda", "Saint Pierre", "Miquelon", "Samoa", "San Marino", "Satellite", "Saudi Arabia", "Senegal",
     "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka",
-    "Saint Kitts and Nevis", "St Kitts and Nevis", "St Lucia", "St Vincent", "St. Lucia", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland", "Syria",
-    "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor L'Este", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey",
+    "Saint Kitts and Nevis", "St Kitts and Nevis", "St Lucia", "St Vincent", "St. Lucia", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland",
+    "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor L'Este", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey",
     "Turkmenistan", "Turks and Caicos", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "Uruguay", "Uzbekistan",
-    "Venezuela", "Vietnam", "Virgin Islands", "Yemen", "Zambia", "Zimbabwe", "BH"];
+    "Venezuela", "Vietnam", "Virgin Islands", "Yemen", "Zambia", "Zimbabwe", "BH"
+];
 
 const searchScrapperId = credentials.searchScrapperId;
 const rocketSearchApiKey = credentials.rocketSearchApiKey;
@@ -59,7 +60,7 @@ async function searchForEmail(linkedinUrl) {
     if (response.ok) {
         result = await response.json();
         console.log(result.emails);
-        emails = result.emails
+        emails = result.emails;
         if (emails.length !== 0 && typeof (emails[0].email) != "undefined") {
             return emails[0].email;
         } else {
@@ -91,6 +92,7 @@ async function checkStatus(agentId) {
 
 async function saveResults(array) {
     let count = 0;
+    let undefined = 0;
     for (const element of array) {
         let job = (typeof (element.job) !== "undefined") ? element.job.toLowerCase() : '';
         console.log(job)
@@ -104,24 +106,36 @@ async function saveResults(array) {
             }
             console.log(companyName)
             if (job.includes(companyName.toLowerCase())) {
-                if (element.name === 'undefined') {
-                    return 2;
+                console.log(element.name)
+                let name = '';
+                if (typeof (element.name) === "undefined") {
+                    undefined++;
+                } else {
+                    name = element.name;
                 }
                 count++;
                 let email = await searchForEmail(element.url);
                 // Saving to database
-                let sql = (`INSERT INTO profiles (country, carries, profile_url, Chief_Security_Officer, CSO_Title, CSO_email, carrier_id) VALUES ( '${element.location}', '${company}', '${element.profileUrl}', '${element.name}', '${element.job}', '${email}', ${parsedCarrierId}) `);
+                let sql = (`INSERT INTO profiles (country, carrier, profile_url, name, job_title, email, carrier_id) VALUES ( '${element.location}', '${company}', '${element.profileUrl}', '${name}', '${element.job}', '${email}', ${parsedCarrierId}) `);
                 console.log(sql);
-                con.query(sql, function (err, result, fields) {
-                    if (err) throw err;
+                let result = con.query(sql, async function (err, result, fields) {
+                    if (err) {
+//                        await updateCarriers(parsedCarrierId, 2);
+                        return false;
+                    }
                     console.log("1 record inserted");
-                    //return true;
+                    return true;
                 });
+                if (!result) {
+                    return 2;
+                }
             }
         }
     }
     if (count === 0) {
         return 3;
+    } else if (undefined !== 0) {
+        return 2;
     }
     return 1;
 }
@@ -262,7 +276,7 @@ async function runParser() {
     let accountsIndex = 0;
     for (let carrier of carriers) {
         console.log(carrier.Brand_Name)
-        console.log(accounts[accountsIndex].session_token)
+        console.log(accounts[accountsIndex].name + " " + accounts[accountsIndex].last_name)
         parsedCarrierId = carrier.id;
         company = carrier.Brand_Name;
         if (company.includes(' - ')) {
