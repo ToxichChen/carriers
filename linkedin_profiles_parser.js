@@ -251,11 +251,11 @@ async function getAccounts() {
     });
 }
 
-async function getCarriers() {
+async function getCarriers(count) {
     let sql = (`SELECT *
                 FROM carriers
                 WHERE is_parsed = 0
-                limit 9`);
+                limit ${count}`);
     return await new Promise((resolve, reject) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -271,8 +271,9 @@ async function getCarriers() {
 }
 
 async function runParser() {
-    let carriers = await getCarriers();
     let accounts = await getAccounts();
+    let carriers = await getCarriers(accounts.length * 3);
+    console.log(accounts)
     let accountsIndex = 0;
     for (let carrier of carriers) {
         console.log(carrier.Brand_Name)
@@ -284,8 +285,8 @@ async function runParser() {
         }
         console.log(company)
         await fetchData(await runSearchParser(company + ' security', accounts[accountsIndex].session_token));
-        if (accountsIndex === 2) {
-            accountsIndex -= 2;
+        if (accountsIndex + 1  === accounts.length) {
+            accountsIndex -= accounts.length -1;
         } else {
             accountsIndex++;
         }
