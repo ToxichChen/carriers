@@ -46,11 +46,11 @@ async function uploadData() {
             'Working Tenure': profile.tenure,
             'Carriers': carrierIdArray
         };
-        base(inputbase).create(profileData, function(err, record) {
+        await base(inputbase).create(profileData, async function(err, record) {
             if (err) {
                 console.error(err);
             }
-            console.log(record.getId());
+            console.log(await record.getId());
         });
     }
 }
