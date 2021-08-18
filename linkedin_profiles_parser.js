@@ -10,27 +10,7 @@ let con = mysql.createConnection({
     database: credentials.database
 });
 
-let country_list = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla", "Antigua", "Barbuda", "Argentina", "Armenia",
-    "Aruba", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin",
-    "Bermuda", "Bhutan", "Bolivia", "Bosnia & Herzegovina", "Botswana", "Brazil", "British Virgin Islands", "Brunei", "Bulgaria",
-    "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Cape Verde", "Cayman Islands", "Chad", "Chile", "China", "Colombia", "Congo",
-    "Cook Islands", "Costa Rica", "Cote D Ivoire", "Croatia", "Cruise Ship", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti",
-    "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Estonia", "Ethiopia", "Falkland Islands",
-    "Faroe Islands", "Fiji", "Finland", "France", "French Polynesia", "French West Indies", "Gabon", "Gambia", "Georgia", "Germany", "Ghana",
-    "Gibraltar", "Greece", "Greenland", "Grenada", "Guam", "Guatemala", "Guernsey", "Guinea", "Guinea Bissau", "Guyana", "Haiti", "Honduras",
-    "Hong Kong", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Isle of Man", "Israel", "Italy", "Jamaica", "Japan",
-    "Jersey", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Kyrgyz Republic", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya",
-    "Liechtenstein", "Lithuania", "Luxembourg", "Macau", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta",
-    "Mauritania", "Mauritius", "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat", "Morocco", "Mozambique", "Namibia",
-    "Nepal", "Netherlands", "Netherlands Antilles", "New Caledonia", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman",
-    "Pakistan", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar",
-    "Reunion", "Romania", "Russia", "Rwanda", "Saint Pierre", "Miquelon", "Samoa", "San Marino", "Satellite", "Saudi Arabia", "Senegal",
-    "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka",
-    "Saint Kitts and Nevis", "St Kitts and Nevis", "St Lucia", "St Vincent", "St. Lucia", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland",
-    "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor L'Este", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey",
-    "Turkmenistan", "Turks and Caicos", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "Uruguay", "Uzbekistan",
-    "Venezuela", "Vietnam", "Virgin Islands", "Yemen", "Zambia", "Zimbabwe", "BH"
-];
+let country_list = credentials.country_list
 
 const searchScrapperId = credentials.searchScrapperId;
 const rocketSearchApiKey = credentials.rocketSearchApiKey;
@@ -96,7 +76,7 @@ async function saveResults(array) {
     for (const element of array) {
         let job = (typeof (element.job) !== "undefined") ? element.job.toLowerCase() : '';
         console.log(job)
-        if (/*(job.includes("head") || job.includes("chief") || job.includes("director")) && */ job.includes("security")/* && job.includes(company)*/) {
+        if (/*(job.includes("head") || job.includes("chief") || job.includes("director")) && */ job.includes(workSphere)/* && job.includes(company)*/) {
             let companyName = company;
             for (let country of country_list) {
                 if (company.includes(country)) {
@@ -116,7 +96,7 @@ async function saveResults(array) {
                 count++;
                 let email = await searchForEmail(element.url);
                 // Saving to database
-                let sql = (`INSERT INTO profiles (country, carrier, profile_url, name, job_title, email, carrier_id) VALUES ( '${element.location}', '${company}', '${element.profileUrl}', '${name}', '${element.job}', '${email}', ${parsedCarrierId}) `);
+                let sql = (`INSERT INTO profiles (country, carrier, profile_url, name, job_title, email, carrier_id, work_sphere) VALUES ( '${element.location}', '${company}', '${element.profileUrl}', '${name}', '${element.job}', '${email}', ${parsedCarrierId}, '${workSphere}') `);
                 console.log(sql);
                 let result = con.query(sql, async function (err, result, fields) {
                     if (err) {
@@ -141,7 +121,14 @@ async function saveResults(array) {
 }
 
 async function updateCarriers(carrierId, state) {
-    let sql = (`UPDATE carriers SET is_parsed = ${state} WHERE id = ${carrierId}`);
+    let sql = '';
+    if (workSphere === 'security') {
+        sql = (`UPDATE carriers SET is_parsed_security = ${state} WHERE id = ${carrierId}`);
+    } else if (workSphere === 'identity') {
+        sql = (`UPDATE carriers SET is_parsed_identity = ${state} WHERE id = ${carrierId}`);
+    } else if (workSphere === 'authentication') {
+        sql = (`UPDATE carriers SET is_parsed_auth = ${state} WHERE id = ${carrierId}`);
+    }
     return await new Promise((resolve, reject) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -252,10 +239,26 @@ async function getAccounts() {
 }
 
 async function getCarriers(count) {
-    let sql = (`SELECT *
+    let sql = '';
+    if (workSphere === 'security') {
+        sql = (`SELECT *
                 FROM carriers
-                WHERE is_parsed = 0
+                WHERE is_parsed_security = 0
                 limit ${count}`);
+    } else if (workSphere === 'identity') {
+        sql = (`SELECT *
+                FROM carriers
+                WHERE is_parsed_identity = 0
+                limit ${count}`);
+    } else if (workSphere === 'authentication') {
+        sql = (`SELECT *
+                FROM carriers
+                WHERE is_parsed_auth = 0
+                limit ${count}`);
+    } else {
+        console.log("PLEASE ENTER CORRECT WORK SPHERE (security, identity, authentication)")
+        process.exit()
+    }
     return await new Promise((resolve, reject) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -284,7 +287,7 @@ async function runParser() {
             company = company.replace(' - ', ' ');
         }
         console.log(company)
-        await fetchData(await runSearchParser(company + ' security', accounts[accountsIndex].session_token));
+        await fetchData(await runSearchParser(company + ' ' + workSphere, accounts[accountsIndex].session_token));
         if (accountsIndex + 1  === accounts.length) {
             accountsIndex -= accounts.length -1;
         } else {
@@ -297,6 +300,7 @@ async function runParser() {
 
 // ---------Start---------
 // Reading values from console
+let workSphere = credentials.workSphere;
 let company = '';
 let parsedCarrierId = '';
 runParser()

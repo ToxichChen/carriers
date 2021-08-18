@@ -10,7 +10,7 @@ let con = mysql.createConnection({
     database: credentials.database
 });
 
-const profileScrapperId = credentials.profileScrapper;
+const  profileScrapperId = credentials.profileScrapper;
 const phantomBusterApiKey = credentials.phantomBusterApiKey;
 // Credentials for phantombuster
 const initOptions = {
@@ -171,7 +171,6 @@ async function getProfiles() {
 }
 
 async function runParser() {
-    //await fetchData(await runProfileScrapper('https://www.linkedin.com/in/pavlina-kakali-389246b1', "AQEDATUM3joFGaMGAAABenY2d4wAAAF6mkL7jE4Aq6CwnmR8CGaCPo8SMAYJaDPASPuiPaEAw2CzPupql0iLvsJn16BeW5Y2otD0eEyXUHNE5-PpY6eLekd-gZxKLbHCmOmB9ugCGS5fMDUlpYKkGw55"));
     let profiles = await getProfiles();
     let accounts = await getAccounts();
     let accountsIndex = 0;

@@ -8,6 +8,8 @@ module.exports.profileScrapper = '1052966097618791'
 module.exports.rocketSearchApiKey = '8cd41kb002500ac227ce845e7e889ac9d40265';
 module.exports.phantomBusterApiKey = '1JoB23frVJEWFrHFij1W8OIC4JeDGKSgNH3Z0vxei9Q';
 
+module.exports.workSphere = 'identity';
+
 module.exports.country_list = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla", "Antigua", "Barbuda", "Argentina", "Armenia",
     "Aruba", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin",
     "Bermuda", "Bhutan", "Bolivia", "Bosnia & Herzegovina", "Botswana", "Brazil", "British Virgin Islands", "Brunei", "Bulgaria",
