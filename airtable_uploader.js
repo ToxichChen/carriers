@@ -20,7 +20,6 @@ async function getProfilesAndCarriers() {
                 throw err;
             }
             if (result.length >= 1) {
-                console.log(result)
                 resolve(result)
             } else {
                 resolve(false);
@@ -28,31 +27,50 @@ async function getProfilesAndCarriers() {
         });
     });
 }
+function chunkArray(myArray, chunk_size){
+    let index = 0;
+    let arrayLength = myArray.length;
+    let tempArray = [];
+
+    for (index = 0; index < arrayLength; index += chunk_size) {
+        myChunk = myArray.slice(index, index+chunk_size);
+        // Do something if you want with the group
+        tempArray.push(myChunk);
+    }
+
+    return tempArray;
+}
 
 async function uploadData() {
     let profiles = await getProfilesAndCarriers();
     if (profiles === false) {
         console.log('Fill the table of Profiles and Carriers first!');
+        con.end();
         process.exit();
     }
-    for (let profile of profiles) {
-        let carrierIdArray = [];
-        carrierIdArray.push(profile.airtable_id)
-        const profileData = {
-            'Name': profile.name,
-            'Profile Url': profile.profile_url,
-            'Job Title': profile.job_title,
-            'Email': profile.email,
-            'Working Tenure': profile.tenure,
-            'Carriers': carrierIdArray
-        };
-        await base(inputbase).create(profileData, async function(err, record) {
-            if (err) {
-                console.error(err);
-            }
-            console.log(await record.getId());
-        });
+    let result = chunkArray(profiles, 1000);
+    for (let profilesArray of result) {
+        for (let profile of profilesArray) {
+            let carrierIdArray = [];
+            carrierIdArray.push(profile.airtable_id)
+            const profileData = {
+                'Name': profile.name,
+                'Profile Url': profile.profile_url,
+                'Job Title': profile.job_title,
+                'Email': profile.email,
+                'Working Tenure': profile.tenure,
+                'Carriers': carrierIdArray,
+                'Work Sphere': profile.work_sphere
+            };
+            await base(inputbase).create(profileData, async function(err, record) {
+                if (err) {
+                    console.error(err);
+                }
+                console.log(await record.getId());
+            });
+        }
     }
+    con.end();
 }
 const inputbase = 'Carriers Workers';
 
