@@ -10,7 +10,7 @@ let con = mysql.createConnection({
     database: credentials.database
 });
 
-const  profileScrapperId = credentials.profileScrapper;
+const profileScrapperId = credentials.profileScrapper;
 const phantomBusterApiKey = credentials.phantomBusterApiKey;
 // Credentials for phantombuster
 const initOptions = {
@@ -39,8 +39,8 @@ async function checkStatus(agentId) {
     }
 }
 
-async function updateProfile(dateRange, email) {
-    let sql = (`UPDATE profiles SET is_scraped = 1, tenure = '${dateRange}', email = '${email}' WHERE id = ${parsedProfileId}`);
+async function updateProfile(dateRange, email, is_verified) {
+    let sql = (`UPDATE profiles SET is_scraped = 1, tenure = '${dateRange}', email = '${email}', is_verified = ${is_verified} WHERE id = ${parsedProfileId}`);
     return await new Promise((resolve) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -50,6 +50,22 @@ async function updateProfile(dateRange, email) {
         });
     });
 }
+
+async function compareStrings(firstString, secondString) {
+    let firstArray = Array.from(firstString);
+    let secondArray = Array.from(secondString);
+    let count = 0;
+    for (let i = 0; i < firstArray.length; i++) {
+        if (firstArray[i] === secondArray[i]) {
+            count++;
+        }
+    }
+    if (count === 0) {
+        return false;
+    }
+    return (count / firstArray.length) >= 0.7;
+}
+
 
 // Get and save results of searches
 async function getResults(containerId) {
@@ -94,7 +110,7 @@ async function getResults(containerId) {
     }
 }
 
-async function fetchData(containerId) {
+async function fetchData(containerId, profile) {
     let result = await getResults(containerId);
     if (result === false) {
         console.log('Error occured')
@@ -102,12 +118,16 @@ async function fetchData(containerId) {
         console.log(result)
     } else {
         let email = '';
-        if (profileObject.email === '' && typeof (result[0].dropcontact) !== 'undefined') {
+        if (profileObject.email === '' && typeof (result[0].dropcontact[0]) !== 'undefined') {
             email = result[0].dropcontact[0].email;
+        }
+        if (await compareStrings(result[0].jobs[0].companyName.toLowerCase().trim(), profileObject.carrier.toLowerCase()) && result[0].jobs[0].jobTitle.toLowerCase().includes(profileObject.work_sphere.toLowerCase())) {
+            is_verified = 1;
         }
         if (typeof (result[0].jobs[0]) !== 'undefined' && typeof (result[0].jobs[0].dateRange) !== 'undefined') {
             console.log(result[0].jobs[0].dateRange)
-            await updateProfile(result[0].jobs[0].dateRange, email);
+            console.log(result[0].jobs[0].jobTitle)
+            await updateProfile(result[0].jobs[0].dateRange, email, is_verified);
         }
     }
 }
@@ -155,7 +175,12 @@ async function getAccounts() {
 }
 
 async function getProfiles() {
-    let sql = (`SELECT * FROM profiles WHERE is_scraped = 0 and profile_url != '' limit 3`);
+    let sql = (`SELECT *
+                FROM profiles
+                WHERE is_scraped = 0
+                  and profile_url != ''
+                  and is_scraped = 0
+                limit 3`);
     return await new Promise((resolve) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -174,11 +199,13 @@ async function runParser() {
     let profiles = await getProfiles();
     let accounts = await getAccounts();
     let accountsIndex = 0;
+    console.log(accounts);
     for (let profile of profiles) {
-        console.log(profile.name)
-        console.log(accounts[accountsIndex].name + " " + accounts[accountsIndex].last_name)
+        is_verified = 0;
+        console.log(profile.name);
+        console.log(accounts[accountsIndex].name + " " + accounts[accountsIndex].last_name);
         parsedProfileId = profile.id;
-        profileObject = profile
+        profileObject = profile;
         await fetchData(await runProfileScrapper(profile.profile_url, accounts[accountsIndex].session_token));
         if (accountsIndex === 2) {
             accountsIndex -= 2;
@@ -189,9 +216,7 @@ async function runParser() {
     con.end();
 }
 
-
-// ---------Start---------
-// Reading values from console
 let profileObject;
 let parsedProfileId = '';
+let is_verified;
 runParser()

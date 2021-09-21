@@ -10,8 +10,15 @@ let con = mysql.createConnection({
     database: credentials.database
 });
 
+async function sleep() {
+    let time = 20000;
+    return new Promise((resolve) => {
+        setTimeout(resolve, time);
+    });
+}
+
 async function getProfilesAndCarriers() {
-    let sql = (`SELECT name, profile_url, job_title, email, tenure, airtable_id
+    let sql = (`SELECT name, profile_url, job_title, email, tenure, airtable_id, work_sphere
                 FROM profiles
                          JOIN carriers ON carrier_id = carriers.id`);
     return await new Promise((resolve, reject) => {
@@ -27,28 +34,30 @@ async function getProfilesAndCarriers() {
         });
     });
 }
-function chunkArray(myArray, chunk_size){
+
+async function chunkArray(myArray, chunk_size){
     let index = 0;
     let arrayLength = myArray.length;
     let tempArray = [];
 
     for (index = 0; index < arrayLength; index += chunk_size) {
-        myChunk = myArray.slice(index, index+chunk_size);
+        myChunk = await myArray.slice(index, index+chunk_size);
         // Do something if you want with the group
-        tempArray.push(myChunk);
+        await tempArray.push(myChunk);
     }
 
     return tempArray;
 }
 
 async function uploadData() {
+    let errorsCount = 0;
     let profiles = await getProfilesAndCarriers();
     if (profiles === false) {
         console.log('Fill the table of Profiles and Carriers first!');
         con.end();
         process.exit();
     }
-    let result = chunkArray(profiles, 1000);
+    let result = await chunkArray(profiles, 200);
     for (let profilesArray of result) {
         for (let profile of profilesArray) {
             let carrierIdArray = [];
@@ -65,12 +74,21 @@ async function uploadData() {
             await base(inputbase).create(profileData, async function(err, record) {
                 if (err) {
                     console.error(err);
+                    errorsCount++;
+                    console.log("Failed uploads = " + errorsCount)
                 }
-                console.log(await record.getId());
+                try {
+                    console.log(await record.getId());
+                } catch (e) {
+                    console.log(e)
+                }
             });
         }
+        console.log("___________________ TIER PASSED ___________________")
+        console.log("Failed uploads = " + errorsCount)
+        await sleep();
     }
-    con.end();
+    await con.end();
 }
 const inputbase = 'Carriers Workers';
 
