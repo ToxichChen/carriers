@@ -40,7 +40,7 @@ async function checkStatus(agentId) {
 }
 
 async function updateProfile(dateRange, email, is_verified) {
-    let sql = (`UPDATE profiles SET is_scraped = 1, tenure = '${dateRange}', email = '${email}', is_verified = ${is_verified} WHERE id = ${parsedProfileId}`);
+    let sql = (`UPDATE profiles SET is_scrapped = 1, tenure = '${dateRange}', email = '${email}', is_verified = ${is_verified} WHERE id = ${parsedProfileId}`);
     return await new Promise((resolve) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -177,9 +177,9 @@ async function getAccounts() {
 async function getProfiles() {
     let sql = (`SELECT *
                 FROM profiles
-                WHERE is_scraped = 0
+                WHERE is_scrapped = 0
                   and profile_url != ''
-                  and is_scraped = 0
+                  and is_scrapped = 0
                 limit 3`);
     return await new Promise((resolve) => {
         con.query(sql, async function (err, result) {
