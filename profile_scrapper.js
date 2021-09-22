@@ -174,13 +174,13 @@ async function getAccounts() {
     });
 }
 
-async function getProfiles() {
+async function getProfiles(count) {
     let sql = (`SELECT *
                 FROM profiles
                 WHERE is_scrapped = 0
                   and profile_url != ''
                   and is_scrapped = 0
-                limit 3`);
+                limit ${count}`);
     return await new Promise((resolve) => {
         con.query(sql, async function (err, result) {
             if (err) {
@@ -196,8 +196,8 @@ async function getProfiles() {
 }
 
 async function runParser() {
-    let profiles = await getProfiles();
     let accounts = await getAccounts();
+    let profiles = await getProfiles(accounts.length);
     let accountsIndex = 0;
     console.log(accounts);
     for (let profile of profiles) {
@@ -207,8 +207,8 @@ async function runParser() {
         parsedProfileId = profile.id;
         profileObject = profile;
         await fetchData(await runProfileScrapper(profile.profile_url, accounts[accountsIndex].session_token));
-        if (accountsIndex === 2) {
-            accountsIndex -= 2;
+        if (accountsIndex + 1  === accounts.length) {
+            accountsIndex -= accounts.length -1;
         } else {
             accountsIndex++;
         }
