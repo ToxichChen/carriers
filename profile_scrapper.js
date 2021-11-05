@@ -182,7 +182,7 @@ async function getProfiles(count) {
                 WHERE is_scrapped = 0
                   and profile_url != ''
                   and is_scrapped = 0
-                limit ${count}`);
+                limit ${count * 3} `);
     return await new Promise((resolve) => {
         con.query(sql, async function (err, result) {
             if (err) {
