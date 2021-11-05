@@ -126,10 +126,12 @@ async function fetchData(containerId, profile) {
         if (typeof (result[0].jobs) !== 'undefined' && result[0].jobs >= 1 && await compareStrings(result[0].jobs[0].companyName.toLowerCase().trim(), profileObject.carrier.toLowerCase()) && result[0].jobs[0].jobTitle.toLowerCase().includes(profileObject.work_sphere.toLowerCase())) {
             is_verified = 1;
         }
-        if (typeof (result[0].jobs[0]) !== 'undefined' && typeof (result[0].jobs[0].dateRange) !== 'undefined') {
+        if (typeof (result[0].jobs) !== 'undefined' && typeof (result[0].jobs[0]) !== 'undefined' && typeof (result[0].jobs[0].dateRange) !== 'undefined') {
             console.log(result[0].jobs[0].dateRange)
             console.log(result[0].jobs[0].jobTitle)
             await updateProfile(is_verified, result[0].jobs[0].dateRange, email);
+        } else {
+            await updateProfile(0);
         }
     }
 }
