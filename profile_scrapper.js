@@ -39,7 +39,7 @@ async function checkStatus(agentId) {
     }
 }
 
-async function updateProfile(dateRange, email, is_verified) {
+async function updateProfile(is_verified, dateRange = '', email = '') {
     let sql = (`UPDATE profiles SET is_scrapped = 1, tenure = '${dateRange}', email = '${email}', is_verified = ${is_verified} WHERE id = ${parsedProfileId}`);
     return await new Promise((resolve) => {
         con.query(sql, async function (err, result) {
@@ -114,11 +114,13 @@ async function fetchData(containerId, profile) {
     let result = await getResults(containerId);
     if (result === false) {
         console.log('Error occured')
+        await updateProfile(0);
     } else if (result.error) {
         console.log(result)
+        await updateProfile(0);
     } else {
         let email = '';
-        if (profileObject.email === '' && typeof (result[0].dropcontact[0]) !== 'undefined') {
+        if (profileObject.email === '' && typeof (result[0].dropcontact) !== 'undefined' && typeof (result[0].dropcontact[0]) !== 'undefined') {
             email = result[0].dropcontact[0].email;
         }
         if (await compareStrings(result[0].jobs[0].companyName.toLowerCase().trim(), profileObject.carrier.toLowerCase()) && result[0].jobs[0].jobTitle.toLowerCase().includes(profileObject.work_sphere.toLowerCase())) {
@@ -127,7 +129,7 @@ async function fetchData(containerId, profile) {
         if (typeof (result[0].jobs[0]) !== 'undefined' && typeof (result[0].jobs[0].dateRange) !== 'undefined') {
             console.log(result[0].jobs[0].dateRange)
             console.log(result[0].jobs[0].jobTitle)
-            await updateProfile(result[0].jobs[0].dateRange, email, is_verified);
+            await updateProfile(is_verified, result[0].jobs[0].dateRange, email);
         }
     }
 }
