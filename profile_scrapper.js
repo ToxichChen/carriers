@@ -123,7 +123,7 @@ async function fetchData(containerId, profile) {
         if (profileObject.email === '' && typeof (result[0].dropcontact) !== 'undefined' && typeof (result[0].dropcontact[0]) !== 'undefined') {
             email = result[0].dropcontact[0].email;
         }
-        if (await compareStrings(result[0].jobs[0].companyName.toLowerCase().trim(), profileObject.carrier.toLowerCase()) && result[0].jobs[0].jobTitle.toLowerCase().includes(profileObject.work_sphere.toLowerCase())) {
+        if (typeof (result[0].jobs) !== 'undefined' && result[0].jobs >= 1 && await compareStrings(result[0].jobs[0].companyName.toLowerCase().trim(), profileObject.carrier.toLowerCase()) && result[0].jobs[0].jobTitle.toLowerCase().includes(profileObject.work_sphere.toLowerCase())) {
             is_verified = 1;
         }
         if (typeof (result[0].jobs[0]) !== 'undefined' && typeof (result[0].jobs[0].dateRange) !== 'undefined') {
